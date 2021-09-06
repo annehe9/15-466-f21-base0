@@ -7,9 +7,10 @@
 
 #include <vector>
 #include <deque>
+#include <random>
 
 /*
- * PongMode is a game mode that implements a single-player game of Pong.
+ * PongMode is a game mode that implements a single-player game of Not-Pong.
  */
 
 struct PongMode : Mode {
@@ -23,26 +24,29 @@ struct PongMode : Mode {
 
 	//----- game state -----
 
-	glm::vec2 court_radius = glm::vec2(7.0f, 5.0f);
+	glm::vec2 court_radius = glm::vec2(5.0f, 8.0f);
 	glm::vec2 paddle_radius = glm::vec2(0.2f, 1.0f);
 	glm::vec2 ball_radius = glm::vec2(0.2f, 0.2f);
 
-	glm::vec2 left_paddle = glm::vec2(-court_radius.x + 0.5f, 0.0f);
-	glm::vec2 right_paddle = glm::vec2( court_radius.x - 0.5f, 0.0f);
+	// left paddles logic
+	glm::vec2 left_paddles_radius = glm::vec2(court_radius.x / 4.0f, 0.4f);
+	glm::vec2 left_paddles[4];
+	bool paddles_active[4] = { false };
+	glm::u8vec4 left_paddles_colors[4] = { glm::u8vec4(251, 139, 36, 20), glm::u8vec4(217, 3, 104, 20), glm::u8vec4(130, 2, 99, 20), glm::u8vec4(4, 167, 119, 20) }; //start transparent
+	float tick_acc = 0.0f;
 
-	glm::vec2 ball = glm::vec2(0.0f, 0.0f);
-	glm::vec2 ball_velocity = glm::vec2(-1.0f, 0.0f);
-
-	uint32_t left_score = 0;
-	uint32_t right_score = 0;
-
-	float ai_offset = 0.0f;
-	float ai_offset_update = 0.0f;
+	uint32_t score = 0;
+	std::vector<glm::vec2> balls;
+	std::vector<glm::vec2> ball_velocities;
+	uint32_t num_balls = 0;
+	float gravity = -2.f;
+	bool ball_added = false;
+	int lives = 10;
 
 	//----- pretty gradient trails -----
 
 	float trail_length = 1.3f;
-	std::deque< glm::vec3 > ball_trail; //stores (x,y,age), oldest elements first
+	std::vector<std::deque< glm::vec3 >> ball_trails; //stores (x,y,age), oldest elements first
 
 	//----- opengl assets / helpers ------
 

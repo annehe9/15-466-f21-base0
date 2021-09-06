@@ -1,8 +1,8 @@
-# (TODO: your game's title)
+# Bing Bong Pong
 
-Author: (TODO: your name)
+Author: Anne He
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: A chaotic game about bouncy balls. Press the correct key at the correct time to bounce the balls, otherwise they fall into the abyss. The keys make fun sounds for maximum chaos. The more points you score the more balls appear. How many balls can you juggle?
 
 Screen Shot:
 
@@ -10,8 +10,8 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+ASDF to activate the not-paddles. You have 10 lives shown on the right. You lose lives by dropping balls. When you lose all lives and drop your last ball, the game ends. Your score displays on the left.
 
-Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+Sources: Used https://github.com/15-466/15-466-f21-base0 source code, and ideas from the 15-466 Timing lesson. Sounds sampled from https://freesound.org/people/Timbre/sounds/232210/.
 
 This game was built with [NEST](NEST.md).
