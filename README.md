@@ -10,7 +10,9 @@
 
 **How To Play:**
 
-ASDF to activate the not-paddles. You have 10 lives shown on the right. You lose lives by dropping balls. When you lose all lives and drop your last ball, the game ends. Your score displays on the left.
+ASDF to activate the not-paddles. You have 10 lives shown on the right. You lose lives by dropping balls. When you lose all lives and drop your last ball, the game ends. 
+
+Try to bounce as many balls as possible. Your score displays on the left.
 
 You could button mash but this is not recommended. The game is designed with sound to discourage you from button mashing.
 
