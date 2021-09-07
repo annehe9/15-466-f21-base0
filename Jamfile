@@ -117,10 +117,14 @@ GAME_NAMES =
 	PongMode
 	main
 	load_save_png
+	Sound
+	load_wav
+	data_path
 	gl_compile_program
 	ColorTextureProgram
 	Mode
 	GL
+	Load
 	;
 
 LOCATE_TARGET = objs ; #put objects in 'objs' directory

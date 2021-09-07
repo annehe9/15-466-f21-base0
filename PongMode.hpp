@@ -2,6 +2,8 @@
 
 #include "Mode.hpp"
 #include "GL.hpp"
+#include "Sound.hpp"
+#include "Load.hpp"
 
 #include <glm/glm.hpp>
 
@@ -45,7 +47,7 @@ struct PongMode : Mode {
 
 	//----- pretty gradient trails -----
 
-	float trail_length = 1.3f;
+	float trail_length = 0.5f;
 	std::vector<std::deque< glm::vec3 >> ball_trails; //stores (x,y,age), oldest elements first
 
 	//----- opengl assets / helpers ------
@@ -76,5 +78,4 @@ struct PongMode : Mode {
 	glm::mat3x2 clip_to_court = glm::mat3x2(1.0f);
 	// computed in draw() as the inverse of OBJECT_TO_CLIP
 	// (stored here so that the mouse handling code can use it to position the paddle)
-
 };

@@ -10,6 +10,12 @@
 //for screenshots:
 #include "load_save_png.hpp"
 
+//For asset loading:
+#include "Load.hpp"
+
+//For sound init:
+#include "Sound.hpp"
+
 //Includes for libSDL:
 #include <SDL.h>
 
@@ -85,6 +91,12 @@ int main(int argc, char **argv) {
 
 	//Hide mouse cursor (note: showing can be useful for debugging):
 	//SDL_ShowCursor(SDL_DISABLE);
+
+	//------------ init sound --------------
+	Sound::init();
+
+	//------------ load assets --------------
+	call_load_functions();
 
 	//------------ create game mode + make current --------------
 	Mode::set_current(std::make_shared< PongMode >());
@@ -168,6 +180,8 @@ int main(int argc, char **argv) {
 
 
 	//------------  teardown ------------
+
+	Sound::shutdown();
 
 	SDL_GL_DeleteContext(context);
 	context = 0;

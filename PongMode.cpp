@@ -1,5 +1,9 @@
 #include "PongMode.hpp"
 
+#include "Load.hpp"
+#include "Sound.hpp"
+#include "data_path.hpp"
+
 //for the GL_ERRORS() macro:
 #include "gl_errors.hpp"
 
@@ -14,10 +18,11 @@ PongMode::PongMode() {
 	ball_velocities.push_back(glm::vec2(1.0f, -2.0f));
 	num_balls = 1;
 
-	//set up trail as if ball has been here for 'forever':
-	//ball_trail.clear();
-	//ball_trail.emplace_back(ball, trail_length);
-	//ball_trail.emplace_back(ball, 0.0f);
+	std::deque< glm::vec3 > new_trail;
+	new_trail.clear();
+	new_trail.emplace_back(balls[0], trail_length);
+	new_trail.emplace_back(balls[0], 0.0f);
+	ball_trails.push_back(new_trail);
 
 	//set up left paddles
 	for (uint32_t i = 0; i < 4; ++i) {
@@ -125,16 +130,25 @@ PongMode::~PongMode() {
 	white_tex = 0;
 }
 
+//load sounds. Some chord. Numbers represent semitone diff from bingbong.wav
+Load< Sound::Sample > sample0(LoadTagDefault, []() -> Sound::Sample const* {
+	return new Sound::Sample(data_path("bingbong_2.wav"));
+	});
+
+Load< Sound::Sample > sample1(LoadTagDefault, []() -> Sound::Sample const* {
+	return new Sound::Sample(data_path("bingbong_4.wav"));
+	});
+
+Load< Sound::Sample > sample2(LoadTagDefault, []() -> Sound::Sample const* {
+	return new Sound::Sample(data_path("bingbong_5.wav"));
+	});
+
+Load< Sound::Sample > sample3(LoadTagDefault, []() -> Sound::Sample const* {
+	return new Sound::Sample(data_path("bingbong_7.wav"));
+	});
+
 bool PongMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
-	/*
-	if (evt.type == SDL_MOUSEMOTION) {
-		//convert mouse from window pixels (top-left origin, +y is down) to clip space ([-1,1]x[-1,1], +y is up):
-		glm::vec2 clip_mouse = glm::vec2(
-			(evt.motion.x + 0.5f) / window_size.x * 2.0f - 1.0f,
-			(evt.motion.y + 0.5f) / window_size.y *-2.0f + 1.0f
-		);
-		left_paddle.y = (clip_to_court * glm::vec3(clip_mouse, 1.0f)).y;
-	}*/
+
 	//activate keys based on keypress
 	if (evt.type == SDL_KEYDOWN) {
 		//using if instead of case if multiple keys pressed
@@ -143,21 +157,25 @@ bool PongMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			//play a sound on keydown
 			paddles_active[0] = true;
 			left_paddles_colors[0].w = 255;
+			Sound::play(*sample0, 0.5f, 1.0f);
 		}
 		if (evt.key.keysym.sym == SDLK_s)
 		{
 			paddles_active[1] = true;
 			left_paddles_colors[1].w = 255;
+			Sound::play(*sample1, 0.5f, 1.0f);
 		}
 		if (evt.key.keysym.sym == SDLK_d)
 		{
 			paddles_active[2] = true;
 			left_paddles_colors[2].w = 255;
+			Sound::play(*sample2, 0.5f, 1.0f);
 		}
 		if (evt.key.keysym.sym == SDLK_f)
 		{
 			paddles_active[3] = true;
 			left_paddles_colors[3].w = 255;
+			Sound::play(*sample3, 0.5f, 1.0f);
 		}
 	}
 	if (evt.type == SDL_KEYUP) {
@@ -191,16 +209,25 @@ void PongMode::update(float elapsed) {
 	//Add new ball if none, or every 4 points
 	if ((num_balls == 0 && lives > 0) || score % 4 == 0 && score > 0 && !ball_added) {
 		ball_added = true;
+
 		float xval = ( (float)mt() * 2.0f / mt.max() ) - 1.0f;
 		float yval = ((float)mt() * 2.0f / mt.max()) - 1.0f;
 		xval *= court_radius.x;
 		yval *= court_radius.y;
 		balls.push_back(glm::vec2(xval, yval));
+
 		float xspeed = ((float)mt() * 2.0f / mt.max()) - 1.0f;
 		float yspeed = ((float)mt() * 2.0f / mt.max()) - 1.0f;
 		xspeed *= 4.0f;
 		yspeed *= 3.0f;
 		ball_velocities.push_back(glm::vec2(xspeed, yspeed));
+
+		std::deque< glm::vec3 > new_trail;
+		new_trail.clear();
+		new_trail.emplace_back(balls[num_balls], trail_length);
+		new_trail.emplace_back(balls[num_balls], 0.0f);
+		ball_trails.push_back(new_trail);
+
 		++num_balls;
 	}
 
@@ -284,6 +311,7 @@ void PongMode::update(float elapsed) {
 				//ball_velocity.y = -ball_velocity.y;
 				balls.erase(balls.begin() + i);
 				ball_velocities.erase(ball_velocities.begin() + i);
+				ball_trails.erase(ball_trails.begin() + i);
 				--i;
 				--num_balls;
 				--lives;
@@ -305,22 +333,25 @@ void PongMode::update(float elapsed) {
 		}
 	}
 
-	/*
+	
 	//----- gradient trails -----
+	for (uint32_t i = 0; i < num_balls; ++i) {
+		glm::vec2& ball = balls[i];
+		std::deque< glm::vec3 >& ball_trail = ball_trails[i];
 
-	//age up all locations in ball trail:
-	for (auto &t : ball_trail) {
-		t.z += elapsed;
-	}
-	//store fresh location at back of ball trail:
-	ball_trail.emplace_back(ball, 0.0f);
+		//age up all locations in ball trail:
+		for (auto& t : ball_trail) {
+			t.z += elapsed;
+		}
+		//store fresh location at back of ball trail:
+		ball_trail.emplace_back(ball, 0.0f);
 
-	//trim any too-old locations from back of trail:
-	//NOTE: since trail drawing interpolates between points, only removes back element if second-to-back element is too old:
-	while (ball_trail.size() >= 2 && ball_trail[1].z > trail_length) {
-		ball_trail.pop_front();
+		//trim any too-old locations from back of trail:
+		//NOTE: since trail drawing interpolates between points, only removes back element if second-to-back element is too old:
+		while (ball_trail.size() >= 2 && ball_trail[1].z > trail_length) {
+			ball_trail.pop_front();
+		}
 	}
-	*/
 
 	//----- fade effect -----
 	// use fixed time
@@ -380,53 +411,58 @@ void PongMode::draw(glm::uvec2 const &drawable_size) {
 	draw_rectangle(glm::vec2( court_radius.x+wall_radius, 0.0f)+s, glm::vec2(wall_radius, court_radius.y + 2.0f * wall_radius), shadow_color);
 	draw_rectangle(glm::vec2( 0.0f,-court_radius.y-wall_radius)+s, glm::vec2(court_radius.x, wall_radius), shadow_color);
 	draw_rectangle(glm::vec2( 0.0f, court_radius.y+wall_radius)+s, glm::vec2(court_radius.x, wall_radius), shadow_color);
-	//draw_rectangle(ball+s, ball_radius, shadow_color);
+	for (uint32_t i = 0; i < num_balls; ++i) {
+		glm::vec2& ball = balls[i];
+		draw_rectangle(ball + s, ball_radius, shadow_color);
+	}
 
 	//ball's trail:
-	/*
-	if (ball_trail.size() >= 2) {
-		//start ti at second element so there is always something before it to interpolate from:
-		std::deque< glm::vec3 >::iterator ti = ball_trail.begin() + 1;
-		//draw trail from oldest-to-newest:
-		constexpr uint32_t STEPS = 20;
-		//draw from [STEPS, ..., 1]:
-		for (uint32_t step = STEPS; step > 0; --step) {
-			//time at which to draw the trail element:
-			float t = step / float(STEPS) * trail_length;
-			//advance ti until 'just before' t:
-			while (ti != ball_trail.end() && ti->z > t) ++ti;
-			//if we ran out of recorded tail, stop drawing:
-			if (ti == ball_trail.end()) break;
-			//interpolate between previous and current trail point to the correct time:
-			glm::vec3 a = *(ti-1);
-			glm::vec3 b = *(ti);
-			glm::vec2 at = (t - a.z) / (b.z - a.z) * (glm::vec2(b) - glm::vec2(a)) + glm::vec2(a);
+	for (uint32_t i = 0; i < num_balls; ++i) {
+		glm::vec2& ball = balls[i];
+		std::deque< glm::vec3 >& ball_trail = ball_trails[i];
+		if (ball_trail.size() >= 2) {
+			//start ti at second element so there is always something before it to interpolate from:
+			std::deque< glm::vec3 >::iterator ti = ball_trail.begin() + 1;
+			//draw trail from oldest-to-newest:
+			constexpr uint32_t STEPS = 10;
+			//draw from [STEPS, ..., 1]:
+			for (uint32_t step = STEPS; step > 0; --step) {
+				//time at which to draw the trail element:
+				float t = step / float(STEPS) * trail_length;
+				//advance ti until 'just before' t:
+				while (ti != ball_trail.end() && ti->z > t) ++ti;
+				//if we ran out of recorded tail, stop drawing:
+				if (ti == ball_trail.end()) break;
+				//interpolate between previous and current trail point to the correct time:
+				glm::vec3 a = *(ti - 1);
+				glm::vec3 b = *(ti);
+				glm::vec2 at = (t - a.z) / (b.z - a.z) * (glm::vec2(b) - glm::vec2(a)) + glm::vec2(a);
 
-			//look up color using linear interpolation:
-			//compute (continuous) index:
-			float c = (step-1) / float(STEPS-1) * trail_colors.size();
-			//split into an integer and fractional portion:
-			int32_t ci = int32_t(std::floor(c));
-			float cf = c - ci;
-			//clamp to allowable range (shouldn't ever be needed but good to think about for general interpolation):
-			if (ci < 0) {
-				ci = 0;
-				cf = 0.0f;
-			}
-			if (ci > int32_t(trail_colors.size())-2) {
-				ci = int32_t(trail_colors.size())-2;
-				cf = 1.0f;
-			}
-			//do the interpolation (casting to floating point vectors because glm::mix doesn't have an overload for u8 vectors):
-			glm::u8vec4 color = glm::u8vec4(
-				glm::mix(glm::vec4(trail_colors[ci]), glm::vec4(trail_colors[ci+1]), cf)
-			);
+				//look up color using linear interpolation:
+				//compute (continuous) index:
+				float c = (step - 1) / float(STEPS - 1) * trail_colors.size();
+				//split into an integer and fractional portion:
+				int32_t ci = int32_t(std::floor(c));
+				float cf = c - ci;
+				//clamp to allowable range (shouldn't ever be needed but good to think about for general interpolation):
+				if (ci < 0) {
+					ci = 0;
+					cf = 0.0f;
+				}
+				if (ci > int32_t(trail_colors.size()) - 2) {
+					ci = int32_t(trail_colors.size()) - 2;
+					cf = 1.0f;
+				}
+				//do the interpolation (casting to floating point vectors because glm::mix doesn't have an overload for u8 vectors):
+				glm::u8vec4 color = glm::u8vec4(
+					glm::mix(glm::vec4(trail_colors[ci]), glm::vec4(trail_colors[ci + 1]), cf)
+				);
 
-			//draw:
-			draw_rectangle(at, ball_radius, color);
+				//draw:
+				draw_rectangle(at, ball_radius, color);
+			}
 		}
 	}
-	*/
 	//solid objects:
 
 	//walls:
