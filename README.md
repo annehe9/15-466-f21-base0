@@ -2,7 +2,7 @@
 
 Author: Anne He
 
-Design: A chaotic game about bouncy balls. Press the correct key at the correct time to bounce the balls, otherwise they fall into the abyss. The keys make fun sounds for maximum chaos. The more points you score the more balls appear. How many balls can you juggle?
+Design: A chaotic game about bouncy balls. Press the correct key at the correct time to bounce the balls, otherwise they fall into ***the abyss***. The keys make fun sounds for maximum chaos. The more points you score the more balls appear. How many balls can you juggle?
 
 Screen Shot:
 
